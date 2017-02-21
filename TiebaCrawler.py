@@ -37,6 +37,7 @@ import re
 timeout = 10
 content_re = re.compile(r"post_content_\d+")
 tiezi_url_re = re.compile(r"/p/\d+")
+tiezi_pn_re = re.compile(r"/p/\d+\?pn=(?P<pn>\d+)")
 
 class Tiezi(object):
     base_url = "http://tieba.baidu.com"
@@ -46,8 +47,28 @@ class Tiezi(object):
         self.url_ = self.join_url()
         print self.url_
 
-        self.fid_ = urllib2.urlopen(self.url_)
-        self.soup_ = BeautifulSoup(self.fid_, "lxml")
+        self.pn_ = 1    # 帖子页码，默认一页
+        self.fid_ = []  # 每页的内容
+        self.soup_ = [] # 每页的soup
+        self.fid_.append(urllib2.urlopen(self.url_))
+        self.soup_.append(BeautifulSoup(self.fid_[0], "lxml"))
+
+        # 检查帖子是否多页
+        pf = self.soup_[0].find_all("li", {"class":"l_pager pager_theme_5 pb_list_pager"})
+        if len(pf) == 0:
+            return
+        pf_urls = pf[0].find_all("a")
+        for pf_url in pf_urls:
+            mo = tiezi_pn_re.search(str(pf_url))
+            cur_pn = int(mo.groupdict()["pn"])
+            self.pn_ = cur_pn if cur_pn > self.pn_ else self.pn_
+
+        # 拼接每页的url，并打开
+        for pn in xrange(2, self.pn_+1):
+            cur_url = "%s?pn=%d"%(self.url_, pn)
+            print cur_url
+            self.fid_.append(urllib2.urlopen(cur_url))
+            self.soup_.append(BeautifulSoup(self.fid_[pn-1], "lxml"))
 
 
     def join_url(self):
@@ -56,10 +77,11 @@ class Tiezi(object):
 
     def get_content(self):
         all_text = []
-        contents = self.soup_.find_all("div")
-        for content in contents:
-            if "id" in content.attrs and content_re.match(content["id"]):
-                all_text.append((self.url_, content.text.strip()))
+        for soup in self.soup_:
+            contents = soup.find_all("div")
+            for content in contents:
+                if "id" in content.attrs and content_re.match(content["id"]):
+                    all_text.append((self.url_, content.text.strip()))
         return all_text
 
 class Zhuye(object):
