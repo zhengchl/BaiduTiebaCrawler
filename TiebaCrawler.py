@@ -14,6 +14,16 @@ http://tieba.baidu.com/p/4966830781
 帖子html示例：
 <div id="post_content_103484160275" class="d_post_content j_d_post_content ">            天天德州里面的十日签活动，拿福字换了奖励，却没用奖励，用十天的换来的福却用完了，我就呵呵了，TM<a href="http://jump.bdimg.com/safecheck/index?url=rN3wPs8te/pL4AOY0zAwhz3wi8AXlR5gsMEbyYdIw620q6P4KNTgxO2jJ4m3Rd0yt6XyibVFgk4fbLMgytUg5Z4Q4OO30Ri8SAtVjSx1NjJY8K44RtEayPWmgLpz8y36hTdCT9IUs4T05hvgchh9CzxCZVKzLsIy7/LrcfWaVD0dJnZ4aIMtppuQye2MG4bWMDxm7iZ2BjQ="  class="ps_cb" target="_blank" onclick="$.stats.track(0, 'nlp_ps_word',{obj_name:'腾讯'});$.stats.track('Pb_content_wordner','ps_callback_statics')">腾讯</a>就是这么玩人的吗？？</div>
 <div id="post_content_103484761972" class="d_post_content j_d_post_content ">            我也没到账</div>
+
+帖子分页html示例
+	<li class="l_pager pager_theme_5 pb_list_pager"><span class="tP">1</span>
+<a href="/p/4889568200?pn=2">2</a>
+<a href="/p/4889568200?pn=3">3</a>
+<a href="/p/4889568200?pn=4">4</a>
+<a href="/p/4889568200?pn=2">下一页</a>
+<a href="/p/4889568200?pn=4">尾页</a>
+</li>
+
 '''
 
 import urllib2
