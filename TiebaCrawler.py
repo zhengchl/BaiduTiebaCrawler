@@ -39,6 +39,15 @@ content_re = re.compile(r"post_content_\d+")
 tiezi_url_re = re.compile(r"/p/\d+")
 tiezi_pn_re = re.compile(r"/p/\d+\?pn=(?P<pn>\d+)")
 
+def read_url(url):
+    try:
+        fid = urllib2.urlopen(url)
+        soup = BeautifulSoup(fid, "lxml")
+    except:
+        print "error: open %s"%url
+        return None, None
+    return fid, soup
+
 class Tiezi(object):
     base_url = "http://tieba.baidu.com"
     def __init__(self, tiezi_url):
@@ -50,8 +59,15 @@ class Tiezi(object):
         self.pn_ = 1    # 帖子页码，默认一页
         self.fid_ = []  # 每页的内容
         self.soup_ = [] # 每页的soup
-        self.fid_.append(urllib2.urlopen(self.url_))
-        self.soup_.append(BeautifulSoup(self.fid_[0], "lxml"))
+        self.url_list_ = [] # 每页的url
+        
+        fid, soup = read_url(self.url_)
+        if not fid:
+            return
+
+        self.fid_.append(fid)
+        self.soup_.append(soup)
+        self.url_list_.append(self.url_)
 
         # 检查帖子是否多页
         pf = self.soup_[0].find_all("li", {"class":"l_pager pager_theme_5 pb_list_pager"})
@@ -67,8 +83,14 @@ class Tiezi(object):
         for pn in xrange(2, self.pn_+1):
             cur_url = "%s?pn=%d"%(self.url_, pn)
             print cur_url
-            self.fid_.append(urllib2.urlopen(cur_url))
-            self.soup_.append(BeautifulSoup(self.fid_[pn-1], "lxml"))
+            fid, soup = read_url(cur_url)
+
+            if not fid:
+                continue
+            
+            self.fid_.append(fid)
+            self.soup_.append(soup)
+            self.url_list_.append(cur_url)
 
 
     def join_url(self):
@@ -77,11 +99,11 @@ class Tiezi(object):
 
     def get_content(self):
         all_text = []
-        for soup in self.soup_:
+        for i, soup in enumerate(self.soup_):
             contents = soup.find_all("div")
             for content in contents:
                 if "id" in content.attrs and content_re.match(content["id"]):
-                    all_text.append((self.url_, content.text.strip()))
+                    all_text.append((self.url_list_[i], content.text.strip()))
         return all_text
 
 class Zhuye(object):
@@ -95,8 +117,10 @@ class Zhuye(object):
     def get_tiezi_list(self, pn):
         url = self.get_page_url(pn)
         print url
-        fid = urllib2.urlopen(url)
-        soup = BeautifulSoup(fid, "lxml")
+
+        fid, soup = read_url(url)
+        if not fid:
+            return []
 
         tiezi_list = []
 
@@ -111,16 +135,17 @@ class Zhuye(object):
 if __name__ == '__main__':
     socket.setdefaulttimeout(timeout)
 
-    keyword = '天天德州'
-    filename = 'result'
+    keyword = '欢乐斗地主'
+    filename = 'result_doudizhu'
 
     tiezi_list = []
     zhuye = Zhuye(keyword)
-    for i in xrange(1, 2):
+    for i in xrange(1, 420):
         tiezi_list.extend(zhuye.get_tiezi_list(i))
 
-    tiezi = [Tiezi(url) for url in tiezi_list]
-    texts = [var.get_content() for var in tiezi]
     with open(filename, "w") as fid:
-        for text in itertools.chain(*texts):
-            fid.write("%s\t%s\n"%(text[0].encode('utf8'), text[1].encode('utf8')))
+        for url in tiezi_list:
+            tiezi = Tiezi(url)
+            contents = tiezi.get_content()
+            for content in contents:
+                fid.write("%s\t%s\n"%(content[0].encode('utf8'), content[1].encode('utf8')))
